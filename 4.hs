@@ -1,12 +1,15 @@
 type Matrix = [[Int]]
 
+printMat :: Matrix -> IO ()
+printMat m = mapM_ print m
+
 
 main :: IO ()
 main = do
     content <- readFile "4_test.txt"
     let ls = lines content
         mat = map (map toBinary) ls :: Matrix
-    print (allRolls mat)
+    printMat (allRolls mat)
 
 
 toBinary :: Char -> Int
