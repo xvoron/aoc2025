@@ -1,11 +1,12 @@
 main :: IO ()
 main = do
-    content <- readFile "2.txt"
+    content <- readFile "2_test.txt"
     let stringRanges = splitLine content
         ranges = map parseRange stringRanges
         realRanges = map (\(a, b) -> [a..b]) ranges
         evenRanges = map keepEvenLength realRanges
         finalNumbers = concatMap process evenRanges
+    print finalNumbers
     print (sum finalNumbers)
 
 
