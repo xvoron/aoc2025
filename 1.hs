@@ -1,43 +1,42 @@
 main :: IO ()
 main = do
-    contents <- readFile "test.txt"
-    let instructions = pipeline (lines contents)
-        result = applyInstr (0, 50) instructions
-    let zeros = countZeros result
-    let quotients = countQuotients result
-    print(zeros)
-    print(sum quotients)
-    print(result)
-    print(quotients)
+    contents <- readFile "1.txt"
+    let content_parsed = pipeline (lines contents)
+        instructions = map parseInstr content_parsed
+        xs = scanl (+) 50 instructions
+        hits = zipWith zeroHits xs (drop 1 xs)
+    print (sum hits)
 
+pipeline :: [String] -> [String]
+pipeline = filterEmpty . map (unwords . words)
 
 filterEmpty :: [String] -> [String]
 filterEmpty = filter (not . null)
 
-parseInstr :: String -> ((Int, Int) -> (Int, Int))
-parseInstr ('R':xs) = \(_, x) -> divMod (x + read xs) 100
-parseInstr ('L':xs) = \(_, x) -> divMod (x - read xs) 100
-parseInstr _        = \(_, x) -> divMod x 100
+parseInstr :: String -> Int
+parseInstr ('R':xs) = read xs
+parseInstr ('L':xs) = negate (read xs)
+parseInstr _        = 0
 
-applyInstr :: (Int, Int) -> [String] -> [(Int, Int)]
-applyInstr start xs = scanl (\acc f -> f acc) start (map parseInstr xs)
+zeroHits :: Int -> Int -> Int
+zeroHits x0 x1 =
+    let a = min x0 x1
+        b = max x0 x1
+        hitsClosed = countMultiples100 a b
+        startIsZero = if x0 `mod` 100 == 0 then 1 else 0
+    in hitsClosed - startIsZero
 
-countZeros :: [(Int, Int)] -> Int
-countZeros xs = sum (map (\(_, r) -> if r == 0 then 1 else 0) xs)
+countMultiples100 :: Int -> Int -> Int
+countMultiples100 a b
+    | a > b = 0
+    | otherwise = floorDiv b 100 - ceilDiv a 100 + 1
 
-countQuotients :: [(Int, Int)] -> [Int]
-countQuotients xs =
-    [ step ((q0, r0), (q1, r1))
-    | ((q0, r0), (q1, r1)) <- zip xs (drop 1 xs)
-    ]
+floorDiv :: Int -> Int -> Int
+floorDiv n d =
+    let (q, r) = quotRem n d
+    in if r/=0 && ((r > 0) /= (d > 0)) then q - 1 else q
 
-step :: ((Int, Int), (Int, Int)) -> Int
-step ((_, r0), (q1, r1))
-    | r0 == 0 && q1 == 0                = 0
-    | r0 == 0 && q1 /= 0                = abs q1
-    | r0 /= 0 && q1 == 0 && r1 == 0     = 1
-    | r0 /= 0                           = abs q1
-    | otherwise                         = 0
-
-pipeline :: [String] -> [String]
-pipeline = filterEmpty . map (unwords . words)
+ceilDiv :: Int -> Int -> Int
+ceilDiv n d =
+    let (q, r) = quotRem n d
+    in if r/=0 && ((r > 0) == (d > 0)) then q + 1 else q
